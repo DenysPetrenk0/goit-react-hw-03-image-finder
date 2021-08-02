@@ -6,13 +6,11 @@ import Searchbar from "./components/searchbar/Searchbar";
 import LoaderComponent from "./components/loader/LoaderComponent";
 import Button from "./components/button/Button";
 import { AppStyles } from "./AppStyles";
-import axios from "axios";
 import { error } from "@pnotify/core";
 import "@pnotify/core/dist/PNotify.css";
 import "@pnotify/core/dist/BrightTheme.css";
 import Modal from "./components/modal/Modal";
-
-const API_KEY = "22372696-7b3b1eaff1e1a15c11afd4170";
+import apiServices from "./services/apiServices";
 
 class App extends Component {
   state = {
@@ -37,11 +35,14 @@ class App extends Component {
 
   makesRequest = () => {
     const { page, valueQuery } = this.state;
+    const options = {
+      page,
+      valueQuery,
+    };
+
     this.setState({ isLoading: true });
-    axios
-      .get(
-        `https://pixabay.com/api/?key=${API_KEY}&q=${valueQuery}&page=${page}&image_type=photo&pretty=true&per_page=12`
-      )
+    apiServices
+      .fetchImages(options)
       .then((response) => {
         if (response.data.hits.length === 0) {
           this.messegError();
@@ -68,15 +69,16 @@ class App extends Component {
     this.setState({ largeImageURL: "" });
   };
 
-  openModal = (event) => {
+  openModal = (imageUrl) => {
     this.setState(({ showModal }) => ({
       showModal: !showModal,
+      largeImageURL: imageUrl,
     }));
-    this.setState({ largeImageURL: event.target.dataset.source });
   };
 
   render() {
-    const { images, isLoading, error, showModal, largeImageURL } = this.state;
+    const { images, isLoading, error, showModal, largeImageURL, page } =
+      this.state;
     return (
       <AppStyles>
         {error && this.messegError()}
@@ -86,10 +88,11 @@ class App extends Component {
           <>
             <ImageGallery images={images} openModal={this.openModal} />
             <Button makesRequest={this.makesRequest} />
-            {window.scrollTo({
-              top: document.documentElement.scrollHeight,
-              behavior: "smooth",
-            })}
+            {page > 2 &&
+              window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: "smooth",
+              })}
           </>
         )}
         {showModal && (
